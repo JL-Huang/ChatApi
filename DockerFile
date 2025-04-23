@@ -9,3 +9,4 @@ COPY . .
 
 # 如果你是 Flask 或 FastAPI，这里可能需要替换成 uvicorn 或 flask run
 CMD ["python", "chat.py"]
+
