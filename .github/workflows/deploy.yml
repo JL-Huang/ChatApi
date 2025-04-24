@@ -32,16 +32,18 @@ jobs:
       run: |
         echo "Starting deployment process..."
         ssh -o StrictHostKeyChecking=no root@129.204.24.176 << 'EOF'
-          set -x
+          set -x  # 启用详细日志输出
           echo "Changing to project directory..."
           cd /root/ChatApi
-          echo "Pulling latest code..."
-          git pull origin main
+          echo "Pulling latest code from git..."
+          git pull origin main >> git_pull.log 2>&1  # 将 git pull 的输出保存到 git_pull.log
+          tail -n 20 git_pull.log  # 打印出最近的 20 行日志
           echo "Stopping and removing old container..."
           docker stop chat-api-container || true
           docker rm chat-api-container || true
           echo "Building new Docker image..."
-          docker build -t chat-api .
+          docker build -t chat-api . >> docker_build.log 2>&1  # 将 Docker build 输出保存到 docker_build.log
+          tail -n 20 docker_build.log  # 打印出最近的 20 行日志
           echo "Running new container..."
           docker run -d --name chat-api-container -p 8080:8080 chat-api
           echo "Deployment finished."
