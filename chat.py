@@ -1,27 +1,27 @@
+from flask import Flask, request, jsonify
 import requests
 
-def chat_with_model(messages):
-    url = "http://localhost:11434/api/chat"
-    payload = {
-        "model": "deepseek-llm",
-        "messages": messages,
-        "stream": False
-    }
+app = Flask(__name__)
 
-    response = requests.post(url, json=payload)
-    response.raise_for_status()
-    return response.json()["message"]["content"]
+OLLAMA_API_URL = "http://localhost:11434/api/chat"
+MODEL_NAME = "deepseek-llm"
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json()
+    messages = data.get("messages", [])
+    
+    try:
+        res = requests.post(OLLAMA_API_URL, json={
+            "model": MODEL_NAME,
+            "messages": messages,
+            "stream": False
+        })
+        res.raise_for_status()
+        content = res.json()["message"]["content"]
+        return jsonify({"reply": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    messages = []
-    print("开始对话吧！输入 'exit' 退出。\n")
-
-    while True:
-        user_input = input("你：")
-        if user_input.lower() in ["exit", "quit"]:
-            break
-
-        messages.append({"role": "user", "content": user_input})
-        reply = chat_with_model(messages)
-        messages.append({"role": "assistant", "content": reply})
-        print("🤖：", reply)
+    app.run(host="0.0.0.0", port=5000)

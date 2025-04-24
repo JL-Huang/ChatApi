@@ -1,12 +1,10 @@
 FROM python:3.10-slim
 
 WORKDIR /app
+COPY . /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-COPY . .
-
-# 如果你是 Flask 或 FastAPI，这里可能需要替换成 uvicorn 或 flask run
+EXPOSE 5000
 CMD ["python", "chat.py"]
 
