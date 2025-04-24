@@ -1,31 +1,48 @@
-name: Deploy ChatApi to Server
+name: Deploy to Server
 
 on:
   push:
     branches:
-      - main
+      - main  # 监听 main 分支的 push 事件
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 在 GitHub 的 Ubuntu 环境中运行
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3  # 获取项目代码
 
     - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.5.4
+      uses: webfactory/ssh-agent@v0.5.4  # 使用 ssh-agent 设置 SSH 密钥
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # 从 GitHub Secrets 中获取 SSH 私钥
+      continue-on-error: false  # 强制失败时终止整个步骤
+      id: ssh-setup  # 给这个步骤命名
 
-    - name: Deploy to Server via SSH
+    - name: Check SSH setup logs
       run: |
-        ssh -o StrictHostKeyChecking=no root@129.204.24.176 << 'EOF'
-          cd /root/ChatApi
-          git pull origin main
-          docker stop chat-api-container || true
-          docker rm chat-api-container || true
-          docker build -t chat-api .
-          docker run -d --name chat-api-container -p 8080:8080 chat-api
-        EOF
+        if [ -z "${{ steps.ssh-setup.outputs.ssh-private-key }}" ]; then
+          echo "SSH private key is not available. Please check GitHub secrets."
+          exit 1
+        fi
+        echo "SSH private key is set up successfully."
 
+    - name: Deploy to server via SSH
+      run: |
+        echo "Starting deployment process..."  # 输出日志
+        ssh -o StrictHostKeyChecking=no root@129.204.24.176 << 'EOF'
+          set -x  # 打印每个执行的命令
+          echo "Changing to project directory..."
+          cd /root/ChatApi  # 进入你的项目目录
+          echo "Pulling latest code..."
+          git pull origin main  # 拉取最新代码
+          echo "Stopping and removing old container..."
+          docker stop chat-api-container || true  # 停止现有容器
+          docker rm chat-api-container || true  # 移除现有容器
+          echo "Building new Docker image..."
+          docker build -t chat-api .  # 构建新的 Docker 镜像
+          echo "Running new container..."
+          docker run -d --name chat-api-container -p 8080:8080 chat-api  # 启动容器
+          echo "Deployment finished."
+        EOF
