@@ -1,0 +1,31 @@
+name: Deploy ChatApi to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy to Server via SSH
+      run: |
+        ssh -o StrictHostKeyChecking=no root@129.204.24.176 << 'EOF'
+          cd /root/ChatApi
+          git pull origin main
+          docker stop chat-api-container || true
+          docker rm chat-api-container || true
+          docker build -t chat-api .
+          docker run -d --name chat-api-container -p 8080:8080 chat-api
+        EOF
+
