@@ -34,7 +34,7 @@ jobs:
         ssh -o StrictHostKeyChecking=no root@129.204.24.176 << 'EOF'
           set -x  # 启用详细日志输出
           echo "Changing to project directory..."
-          cd /root/ChatApi
+          cd /root/Project/ChatApi
           echo "Pulling latest code from git..."
           git pull origin main >> git_pull.log 2>&1  # 将 git pull 的输出保存到 git_pull.log
           tail -n 20 git_pull.log  # 打印出最近的 20 行日志
