@@ -27,8 +27,9 @@ jobs:
       id: check_changes
       run: |
         # Check if Dockerfile or other relevant files changed
+        git fetch --all  # Ensure we're working with the latest code
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changes.txt
-        if grep -q 'Dockerfile' changes.txt || grep -q 'requirements.txt' changes.txt; then
+        if grep -q 'Dockerfile' changes.txt || grep -q 'requirements.txt' changes.txt || grep -q 'src/' changes.txt; then
           echo "Changes detected in Dockerfile or code, proceeding with build."
           echo "true" >> $GITHUB_ENV
         else
