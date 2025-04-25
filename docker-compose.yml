@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Flask 服务
   chat-api:
-    image: HuangJingliang/chat-api:latest  # 从 Docker Hub 拉取最新镜像
+    image: huangjingliang/chat-api:latest  # 从 Docker Hub 拉取最新镜像
     container_name: chat-api-container
     ports:
       - "5000:5000"

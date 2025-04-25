@@ -9,4 +9,3 @@ EXPOSE 5000
 CMD ["python", "chat.py"]
 
 
-

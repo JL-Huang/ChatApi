@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  IMAGE_NAME: HuangJingliang/chat-api
+  IMAGE_NAME: huangjingliang/chat-api
 
 jobs:
   deploy:
@@ -65,7 +65,7 @@ jobs:
           tail -n 20 git_pull.log
 
           echo "🐳 Pulling latest Docker image from Docker Hub..."
-          docker pull HuangJingliang/chat-api:latest >> docker_pull.log 2>&1
+          docker pull huangjingliang/chat-api:latest >> docker_pull.log 2>&1
           tail -n 20 docker_pull.log
 
           echo "🛑 Stopping and removing old container..."
@@ -73,7 +73,7 @@ jobs:
           docker rm chat-api-container || true
 
           echo "🚀 Starting new container..."
-          docker run -d --name chat-api-container -p 5000:5000 HuangJingliang/chat-api:latest
+          docker run -d --name chat-api-container -p 5000:5000 huangjingliang/chat-api:latest
 
           echo "✅ Deployment finished. Chat API is running."
         EOF
