@@ -1,12 +1,22 @@
 #!/bin/bash
 
-# 构建镜像
-docker build -t chat-api .
+# 设置容器和镜像名称
+CONTAINER_NAME="chat-api-container"
+IMAGE_NAME="HuangJingliang/chat-api"  # 使用从 Docker Hub 拉取的镜像
 
 # 删除已有的容器（如果存在）
-docker rm -f chat-api-container 2>/dev/null
+if docker ps -a | grep -q $CONTAINER_NAME; then
+  echo "停止并删除已有容器..."
+  docker rm -f $CONTAINER_NAME
+fi
 
-# 运行容器（11434 为服务端口，可根据你项目修改）
-docker run -d -p 11434:11434 --name chat-api-container chat-api
+# 拉取最新的 Docker 镜像
+echo "拉取最新的镜像..."
+docker pull $IMAGE_NAME
 
-echo "✅ 服务已启动：访问 http://129.204.24.176:11434"
+# 运行容器（5000 是 Flask 的默认端口）
+echo "启动新的容器..."
+docker run -d -p 5000:5000 --name $CONTAINER_NAME $IMAGE_NAME
+
+# 输出部署完成消息
+echo "✅ 服务已启动：访问 http://129.204.24.176:5000"

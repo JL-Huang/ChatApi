@@ -5,46 +5,71 @@ on:
     branches:
       - main
 
+env:
+  IMAGE_NAME: HuangJingliang/chat-api
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3  # 获取代码
+      uses: actions/checkout@v3
 
     - name: Set up SSH
       uses: webfactory/ssh-agent@v0.5.4
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # 使用 GitHub Secrets 中的私钥
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       id: ssh-setup
 
-    - name: Check SSH setup
+    # Step 1: Check if Dockerfile or relevant files have changed
+    - name: Check for changes in Dockerfile or code
+      id: check_changes
       run: |
-        echo "Checking SSH setup..."
-        if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
-          echo "SSH private key is not available in GitHub secrets. Please check GitHub secrets."
-          exit 1
-        fi
-        echo "SSH private key is set up correctly."
+        # Check if Dockerfile or other relevant files changed
+        git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changes.txt
+        if grep -q 'Dockerfile' changes.txt || grep -q 'requirements.txt' changes.txt; then
+          echo "Changes detected in Dockerfile or code, proceeding with build."
+          echo "true" >> $GITHUB_ENV
+        else
+          echo "No relevant changes detected, skipping build."
+          echo "false" >> $GITHUB_ENV
 
+    # Step 2: Log in to Docker Hub
+    - name: Log in to Docker Hub
+      if: env.DOCKER_BUILD == 'true'
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    # Step 3: Build and Push Docker Image (only if Dockerfile or code changed)
+    - name: Build and Push Docker Image
+      if: env.DOCKER_BUILD == 'true'
+      run: |
+        docker build -t $IMAGE_NAME:latest .
+        docker push $IMAGE_NAME:latest
+
+    # Step 4: Deploy to server via SSH (always run)
     - name: Deploy to server via SSH
       run: |
         echo "Starting deployment process..."
-        ssh -o StrictHostKeyChecking=no root@129.204.24.176 << 'EOF'
-          set -x  # 启用详细日志输出
-          echo "Changing to project directory..."
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          set -x
+          echo "📁 Changing to project directory..."
           cd /root/Project/ChatApi
-          echo "Pulling latest code from git..."
-          git pull origin main >> git_pull.log 2>&1  # 将 git pull 的输出保存到 git_pull.log
-          tail -n 20 git_pull.log  # 打印出最近的 20 行日志
-          echo "Stopping and removing old container..."
+
+          echo "📦 Pulling latest code from Git..."
+          git pull origin main >> git_pull.log 2>&1
+          tail -n 20 git_pull.log
+
+          echo "🐳 Pulling latest Docker image from Docker Hub..."
+          docker pull $IMAGE_NAME:latest >> docker_pull.log 2>&1
+          tail -n 20 docker_pull.log
+
+          echo "🛑 Stopping and removing old container..."
           docker stop chat-api-container || true
           docker rm chat-api-container || true
-          echo "Building new Docker image..."
-          docker build -t chat-api . >> docker_build.log 2>&1  # 将 Docker build 输出保存到 docker_build.log
-          tail -n 20 docker_build.log  # 打印出最近的 20 行日志
-          echo "Running new container..."
-          docker run -d --name chat-api-container -p 8080:8080 chat-api
-          echo "Deployment finished."
+
+          echo "🚀 Starting new container..."
+          docker run -d --name chat-api-container -p 5000:5000 $IMAGE_NAME:latest
+
+          echo "✅ Deployment finished. Chat API is running."
         EOF
