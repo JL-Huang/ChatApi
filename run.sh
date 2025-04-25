@@ -4,6 +4,10 @@
 CONTAINER_NAME="chat-api-container"
 IMAGE_NAME="HuangJingliang/chat-api"  # 使用从 Docker Hub 拉取的镜像
 
+# 启动 Ollama 服务（假设 Ollama 已经安装并且可以通过命令启动）
+echo "启动 Ollama 服务..."
+ollama start &  # 启动 Ollama 服务并在后台运行
+
 # 删除已有的容器（如果存在）
 if docker ps -a | grep -q $CONTAINER_NAME; then
   echo "停止并删除已有容器..."
