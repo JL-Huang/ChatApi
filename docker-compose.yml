@@ -3,26 +3,35 @@ version: '3.8'
 services:
   # Flask 服务
   chat-api:
-    image: huangjingliang/chat-api:latest  # 从 Docker Hub 拉取最新镜像
+    image: huangjingliang/chat-api:latest
     container_name: chat-api-container
     ports:
       - "5000:5000"
     environment:
-      - MODEL_NAME=deepseek-llm  # 环境变量，可以在 Flask 服务中访问
+      - MODEL_NAME=deepseek-llm
     restart: always
     depends_on:
-      - ollama  # Flask 服务依赖 Ollama 服务
+      - ollama
+    networks:
+      - chat-ollama-network  # 自定义网络，名称更具描述性
 
   # Ollama 服务
   ollama:
-    image: ollama/ollama:latest   # 从 Docker Hub 拉取最新镜像
+    image: ollama/ollama:latest
     container_name: ollama
     ports:
-      - "11434:11434"  # Ollama 服务端口
+      - "11434:11434"
     volumes:
-      - /root/.ollama:/root/.ollama  # 持久化数据
+      - /root/.ollama:/root/.ollama
     restart: always
+    networks:
+      - chat-ollama-network  # 使用相同的网络
 
 # 定义数据卷，用于持久化数据
 volumes:
   ollama-data:
+
+# 定义网络
+networks:
+  chat-ollama-network:  # 具有描述性的网络名称
+    driver: bridge
