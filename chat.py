@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-OLLAMA_API_URL = "http://localhost:11434/api/chat"
+OLLAMA_API_URL = "http://ollama:11434/api/chat"
 MODEL_NAME = "deepseek-llm"
 
 @app.route("/chat", methods=["POST"])
