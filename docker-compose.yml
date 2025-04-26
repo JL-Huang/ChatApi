@@ -20,7 +20,7 @@ services:
     ports:
       - "11434:11434"  # Ollama 服务端口
     volumes:
-      - ~/.ollama:/root/.ollama  # 持久化数据
+      - /root/.ollama:/root/.ollama  # 持久化数据
     restart: always
 
 # 定义数据卷，用于持久化数据
