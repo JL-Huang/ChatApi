@@ -13,15 +13,15 @@ services:
     depends_on:
       - ollama  # Flask 服务依赖 Ollama 服务
 
-  # Ollama 服务
-  ollama:
-    image: ollama/ollama:latest   # 从 Docker Hub 拉取最新镜像
-    container_name: ollama
-    ports:
-      - "11434:11434"  # Ollama 服务端口
-    volumes:
-      - ollama-data:/root/.ollama  # 持久化数据
-    restart: always
+  # # Ollama 服务
+  # ollama:
+  #   image: ollama/ollama:latest   # 从 Docker Hub 拉取最新镜像
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"  # Ollama 服务端口
+  #   volumes:
+  #     - ollama-data:/root/.ollama  # 持久化数据
+  #   restart: always
 
 # 定义数据卷，用于持久化数据
 volumes:
