@@ -16,4 +16,4 @@ RUN pip install -r requirements.txt
 EXPOSE 5000
 
 # 启动 Flask 服务
-CMD ["python", "chat.py"]
+CMD ["python", "app/chat.py"]

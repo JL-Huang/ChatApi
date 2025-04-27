@@ -10,6 +10,8 @@ services:
     environment:
       - MODEL_NAME=deepseek-llm
     restart: always
+    volumes:
+      - ./app:/app  # 将本地的 app 文件夹挂载到容器内的 /app 文件夹
     depends_on:
       - ollama
     networks:
