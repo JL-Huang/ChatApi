@@ -24,14 +24,10 @@ services:
     environment:
       - OLLAMA_MODELS=/root/.ollama/models
     volumes:
-      - /root/.ollama:/root/.ollama
+      - /root/.ollama:/root/.ollama  # 绑定挂载宿主机目录
     restart: always
     networks:
       - chat-ollama-network  # 使用相同的网络
-
-# 定义数据卷，用于持久化数据
-volumes:
-  ollama-data:
 
 # 定义网络
 networks:
