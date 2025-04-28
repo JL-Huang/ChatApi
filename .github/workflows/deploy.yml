@@ -31,12 +31,13 @@ jobs:
         git fetch --all
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changes.txt
 
-        if grep -q 'Dockerfile' changes.txt || grep -q 'requirements.txt' changes.txt || grep -q '^src/' changes.txt; then
+        if grep -q 'Dockerfile' changes.txt || grep -q 'requirements.txt' changes.txt; then
           echo "Changes detected in Dockerfile or code, proceeding with build."
           echo "DOCKER_BUILD=true" >> $GITHUB_ENV
         else
           echo "No relevant changes detected, skipping build."
           echo "DOCKER_BUILD=false" >> $GITHUB_ENV
+        fi 
           
     # Step 2: Log in to Docker Hub
     - name: Log in to Docker Hub
