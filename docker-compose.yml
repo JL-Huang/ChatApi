@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Flask 服务
+  # Chat 服务
   chat-api:
     image: huangjingliang/chat-api:latest
     container_name: chat-api-container
@@ -11,11 +11,37 @@ services:
       - MODEL_NAME=deepseek-llm
     restart: always
     volumes:
-      - ./app:/app  # 将本地的 app 文件夹挂载到容器内的 /app 文件夹
+      - ./chat:/chat
     depends_on:
       - ollama
     networks:
-      - chat-ollama-network  # 自定义网络，名称更具描述性
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # RAG 服务
+  rag-api:
+    image: huangjingliang/rag-api:latest
+    container_name: rag-api-container
+    ports:
+      - "6000:6000"
+    environment:
+      - RAG_MODE=production
+    restart: always
+    volumes:
+      - ./rag:/rag
+    depends_on:
+      - ollama
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # Ollama 服务
   ollama:
@@ -26,12 +52,16 @@ services:
     environment:
       - OLLAMA_MODELS=/root/.ollama/models
     volumes:
-      - /root/.ollama:/root/.ollama  # 绑定挂载宿主机目录
+      - /root/.ollama:/root/.ollama
     restart: always
     networks:
-      - chat-ollama-network  # 使用相同的网络
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-# 定义网络
 networks:
-  chat-ollama-network:  # 具有描述性的网络名称
+  app-network:
     driver: bridge

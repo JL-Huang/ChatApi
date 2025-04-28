@@ -16,7 +16,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # 关键！确保可以使用 git diff
+        fetch-depth: 0  # 确保可以使用 git diff
 
     - name: Set up SSH
       uses: webfactory/ssh-agent@v0.5.4
@@ -24,7 +24,7 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       id: ssh-setup
 
-    # Step 1: Check if Dockerfile or relevant files have changed
+    # Step 1: Check for changes in Dockerfile or code
     - name: Check for changes in Dockerfile or code
       id: check_changes
       run: |
@@ -37,8 +37,7 @@ jobs:
         else
           echo "No relevant changes detected, skipping build."
           echo "DOCKER_BUILD=false" >> $GITHUB_ENV
-        fi
-
+          
     # Step 2: Log in to Docker Hub
     - name: Log in to Docker Hub
       if: env.DOCKER_BUILD == 'true'
@@ -65,15 +64,17 @@ jobs:
           tail -n 20 git_pull.log
 
           echo "🐳 Pulling latest Docker image from Docker Hub..."
-          docker pull huangjingliang/chat-api:latest >> docker_pull.log 2>&1
+          docker pull $IMAGE_NAME:latest >> docker_pull.log 2>&1
           tail -n 20 docker_pull.log
 
-          echo "🛑 Stopping and removing old container..."
+          echo "🛑 Stopping and removing old containers..."
           docker stop chat-api-container || true
           docker rm chat-api-container || true
+          docker stop rag-api-container || true
+          docker rm rag-api-container || true
 
-          echo "🚀 Starting new container..."
-          docker run -d --name chat-api-container -p 5000:5000 huangjingliang/chat-api:latest
+          echo "🚀 Starting new containers..."
+          docker-compose up -d  # 使用 Docker Compose 启动服务
 
-          echo "✅ Deployment finished. Chat API is running."
+          echo "✅ Deployment finished. Chat API and RAG API are running."
         EOF

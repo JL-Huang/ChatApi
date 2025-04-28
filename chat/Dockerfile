@@ -1,10 +1,10 @@
 FROM python:3.10-slim
 
 # 设置工作目录
-WORKDIR /app
+WORKDIR /chat
 
 # 复制当前目录到容器内
-COPY . /app
+COPY . /chat
 
 # 更新 apt-get 并安装 curl 和其他必要工具
 RUN apt-get update && apt-get install -y curl
