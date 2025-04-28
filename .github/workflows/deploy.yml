@@ -6,7 +6,8 @@ on:
       - main
 
 env:
-  IMAGE_NAME: huangjingliang/chat-api
+  CHAT_IMAGE_NAME: huangjingliang/chat-api
+  RAG_IMAGE_NAME: huangjingliang/rag-api
 
 jobs:
   deploy:
@@ -25,31 +26,45 @@ jobs:
       id: ssh-setup
 
     # Step 1: Check for changes in Dockerfile or code
-    - name: Check for changes in Dockerfile or code
+    - name: Check for changes in chat and rag services
       id: check_changes
       run: |
         git fetch --all
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changes.txt
 
-        if grep -q 'Dockerfile' changes.txt || grep -q 'requirements.txt' changes.txt; then
-          echo "Changes detected in Dockerfile or code, proceeding with build."
-          echo "DOCKER_BUILD=true" >> $GITHUB_ENV
-        else
-          echo "No relevant changes detected, skipping build."
-          echo "DOCKER_BUILD=false" >> $GITHUB_ENV
-        fi 
-          
+        CHAT_BUILD=false
+        RAG_BUILD=false
+
+        if grep -q 'chat/Dockerfile' changes.txt || grep -q 'chat/requirements.txt' changes.txt; then
+          echo "Changes detected in Chat service, proceeding with build."
+          CHAT_BUILD=true
+        fi
+
+        if grep -q 'rag/Dockerfile' changes.txt || grep -q 'rag/requirements.txt' changes.txt; then
+          echo "Changes detected in RAG service, proceeding with build."
+          RAG_BUILD=true
+        fi
+
+        echo "CHAT_BUILD=${CHAT_BUILD}" >> $GITHUB_ENV
+        echo "RAG_BUILD=${RAG_BUILD}" >> $GITHUB_ENV
+
     # Step 2: Log in to Docker Hub
     - name: Log in to Docker Hub
-      if: env.DOCKER_BUILD == 'true'
+      if: env.CHAT_BUILD == 'true' || env.RAG_BUILD == 'true'
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    # Step 3: Build and Push Docker Image
-    - name: Build and Push Docker Image
-      if: env.DOCKER_BUILD == 'true'
+    # Step 3: Build and Push Docker Images
+    - name: Build and Push Chat Docker Image
+      if: env.CHAT_BUILD == 'true'
       run: |
-        docker build -t $IMAGE_NAME:latest .
-        docker push $IMAGE_NAME:latest
+        docker build -t $CHAT_IMAGE_NAME:latest ./chat
+        docker push $CHAT_IMAGE_NAME:latest
+
+    - name: Build and Push RAG Docker Image
+      if: env.RAG_BUILD == 'true'
+      run: |
+        docker build -t $RAG_IMAGE_NAME:latest ./rag
+        docker push $RAG_IMAGE_NAME:latest
 
     # Step 4: Deploy to server via SSH
     - name: Deploy to server via SSH
@@ -64,8 +79,12 @@ jobs:
           git pull origin main >> git_pull.log 2>&1
           tail -n 20 git_pull.log
 
-          echo "🐳 Pulling latest Docker image from Docker Hub..."
-          docker pull $IMAGE_NAME:latest >> docker_pull.log 2>&1
+          echo "🐳 Pulling latest Chat Docker image from Docker Hub..."
+          docker pull $CHAT_IMAGE_NAME:latest >> docker_pull.log 2>&1
+          tail -n 20 docker_pull.log
+
+          echo "🐳 Pulling latest RAG Docker image from Docker Hub..."
+          docker pull $RAG_IMAGE_NAME:latest >> docker_pull.log 2>&1
           tail -n 20 docker_pull.log
 
           echo "🛑 Stopping and removing old containers..."
