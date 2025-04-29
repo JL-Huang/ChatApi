@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Chat 服务
+  chat-api:
+    build: ./chat
+    container_name: chat-api-container
+    ports:
+      - "5000:5000"
+    environment:
+      - MODEL_NAME=deepseek-llm
+    restart: always
+    volumes:
+      - ./chat:/chat
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # RAG 服务
+  rag-api:
+    build: ./rag
+    container_name: rag-api-container
+    ports:
+      - "6000:6000"
+    environment:
+      - RAG_MODE=production
+    restart: always
+    volumes:
+      - ./rag:/rag
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Ollama 服务
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+    volumes:
+      - /Users/huangjingliang/.ollama:/root/.ollama
+    restart: always
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app-network:
+    driver: bridge
